@@ -101,6 +101,52 @@ public class LuaDexLoader {
         libCache.put(fn, libPath);
     }
 
+    @SuppressWarnings("deprecation")
+	public void loadLib2(String name) throws LuaException {
+        String fn = name;
+        int i = name.indexOf(".");  // libname.so     
+        if (i > 0) {
+            fn = name.substring(0, i); // libname
+        }    
+        if (fn.startsWith("lib")) {  //name
+        	fn = fn.substring(3);
+        }         
+        String libDir = mContext.getContext().getDir(fn, Context.MODE_PRIVATE).getAbsolutePath();    
+        String folder;      
+        try {
+            if (Build.CPU_ABI.equalsIgnoreCase("x86_64")) {
+                folder = "x86_64";
+            } else if (Build.CPU_ABI.equalsIgnoreCase("arm64-v8a")) {
+                folder = "arm64-v8a";
+            } else if (Build.CPU_ABI.equalsIgnoreCase("armeabi-v7a")) {
+                folder = "armeabi-v7a";
+            } else if (Build.CPU_ABI.equalsIgnoreCase("armeabi")) {
+                folder = "armeabi";
+            } else if (Build.CPU_ABI.equalsIgnoreCase("x86")) {
+                folder = "x86";
+            } else if (Build.CPU_ABI.equalsIgnoreCase("mips")) {
+                folder = "mips";
+            } else {
+                folder = "armeabi";
+            }
+        } catch (Exception e) {
+            folder = "armeabi";
+        }          
+        //根据CPU类型加载so库
+        String libPath = libDir +"/libs/"+ folder + "/lib" + fn + ".so";    
+        File f = new File(libPath);  
+        if (!f.exists()) { //文件不存在
+            f = new File(luaDir + "/libs/"+ folder + "/lib" + fn + ".so");
+            if (!f.exists()) {
+                throw new LuaException("can not find lib " + name);
+            }
+            LuaUtil.copyFile(luaDir + "/libs/"+ folder + "/lib" + fn + ".so", libPath);      
+        }
+  
+        libCache.put(fn, libPath);
+    } 
+
+
     public HashMap<String, String> getLibrarys() {
         return libCache;
     }
